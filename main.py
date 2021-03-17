@@ -26,6 +26,15 @@ class Exp(Function):
         return np.exp(x)
 
 
-x = Variable(np.array(0.5))
-y = Square()(Exp()(Square()(x)))
-print(y.data)
+def numerical_diff(f: Function, x: Variable, eps=1e-4) -> np.ndarray:
+    x0 = Variable(x.data - eps)
+    x1 = Variable(x.data + eps)
+    y0 = f(x0)
+    y1 = f(x1)
+    return (y1.data - y0.data) / (eps * 2)
+
+
+x = Variable(np.array(2.0))
+dy = numerical_diff(Exp(), x)
+print(dy)
+print(Exp()(x).data)
