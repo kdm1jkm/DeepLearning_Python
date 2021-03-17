@@ -12,6 +12,9 @@ class Variable:
         self.creator = func
 
     def backward(self):
+        if self.grad is None:
+            self.grad = np.ones_like(self.data)
+
         funcs: List[Function] = [self.creator]
         while funcs:
             f = funcs.pop()
@@ -26,7 +29,7 @@ class Function:
     def __call__(self, input: Variable) -> Variable:
         x = input.data
         y = self.forward(x)
-        output = Variable(y)
+        output = Variable(as_array(y))
         output.set_creator(self)
         self.input = input
         self.output = output
@@ -47,12 +50,20 @@ class Square(Function):
         return gy * self.input.data * 2
 
 
+def square(x: np.ndarray) -> Variable:
+    return Square()(x)
+
+
 class Exp(Function):
     def forward(self, x: np.ndarray):
         return np.exp(x)
 
     def backward(self, gy):
         return gy * np.exp(self.input.data)
+
+
+def exp(x: np.ndarray) -> Variable:
+    return Exp()(x)
 
 
 def numerical_diff(f: Function, x: Variable, eps=1e-4) -> np.ndarray:
@@ -63,9 +74,13 @@ def numerical_diff(f: Function, x: Variable, eps=1e-4) -> np.ndarray:
     return (y1.data - y0.data) / (eps * 2)
 
 
-x = Variable(np.array([0.5, 2]))
-y = Square()(Exp()(Square()(x)))
+def as_array(x):
+    if np.isscalar(x):
+        return np.array(x)
+    return x
 
-y.grad = np.ones_like(x)
+
+x = Variable(np.array([0.5, 2]))
+y = square(exp(square(x)))
 y.backward()
 print(x.grad)
