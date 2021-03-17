@@ -5,6 +5,17 @@ class Variable:
     def __init__(self, data: np.ndarray) -> None:
         self.data: np.ndarray = data
         self.grad: np.ndarray = None
+        self.creator: Function = None
+
+    def set_creator(self, func):
+        self.creator = func
+
+    def backward(self):
+        f = self.creator
+        if f is not None:
+            x = f.input
+            x.grad = f.backward(self.grad)
+            x.backward()
 
 
 class Function:
@@ -12,7 +23,9 @@ class Function:
         x = input.data
         y = self.forward(x)
         output = Variable(y)
+        output.set_creator(self)
         self.input = input
+        self.output = output
         return output
 
     def forward(self, x: np.ndarray):
@@ -46,17 +59,9 @@ def numerical_diff(f: Function, x: Variable, eps=1e-4) -> np.ndarray:
     return (y1.data - y0.data) / (eps * 2)
 
 
-A = Square()
-B = Exp()
-C = Square()
+x = Variable(np.array([0.5, 2]))
+y = Square()(Exp()(Square()(x)))
 
-x = Variable(np.array(0.5))
-a = A(x)
-b = B(a)
-y = C(b)
-
-y.grad = np.array(1.0)
-b.grad = C.backward(y.grad)
-a.grad = B.backward(b.grad)
-x.grad = A.backward(a.grad)
+y.grad = np.ones_like(x)
+y.backward()
 print(x.grad)
