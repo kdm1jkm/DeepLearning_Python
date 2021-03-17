@@ -21,6 +21,11 @@ class Square(Function):
         return x ** 2
 
 
-x = Variable(np.array([1, 2, 3]))
-y = Square()(x)
+class Exp(Function):
+    def forward(self, x: np.ndarray):
+        return np.exp(x)
+
+
+x = Variable(np.array(0.5))
+y = Square()(Exp()(Square()(x)))
 print(y.data)
