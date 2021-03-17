@@ -6,10 +6,21 @@ class Variable:
         self.data: np.ndarray = data
 
 
-data = np.array(1.0)
-x = Variable(data)
+class Function:
+    def __call__(self, input: Variable) -> Variable:
+        x = input.data
+        y = self.forward(x)
+        return Variable(y)
 
-print(x.data)
+    def forward(self, x: np.ndarray):
+        raise NotImplementedError()
 
-x.data = np.array(2.0)
-print(x.data)
+
+class Square(Function):
+    def forward(self, x: np.ndarray):
+        return x ** 2
+
+
+x = Variable(np.array([1, 2, 3]))
+y = Square()(x)
+print(y.data)
